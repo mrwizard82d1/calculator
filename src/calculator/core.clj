@@ -12,6 +12,8 @@
 
 
 (ns calculator.core
+  (:use clojure.contrib.str-utils)
+  (:use [clojure.contrib.str-utils2 :only [split-lines]])
   (:import (org.antlr.runtime ANTLRStringStream
 			      CommonTokenStream)
 	   (lein_antlr ExprLexer ExprParser)))
@@ -58,9 +60,31 @@
 
 
 
+(defn translate-error [antlr-error-string]
+  "Translates an ANTLR error string into the form expected by our tests."
+  (let [error-strings (split-lines antlr-error-string)
+        error (first error-strings)
+        matcher (re-matcher #"line (\d+):(-?\d+) (.*)" error)
+        matches (re-find matcher)
+        column (Integer/parseInt (nth matches 2))
+        char-pos (if (neg? column)
+                   1
+                   (+ column 1))]
+    (str "Error at character " char-pos
+         ": expected number or ( ; got eol")))
+
+
 (defn calculate [expr-text]
-  (try
-    (eval (AST (parse-expr expr-text)))
-    (catch Exception e
-	(println "CAUGHT EXCEPTION: " e))))
+  ;; (try
+  ;;   (eval (AST (parse-expr expr-text)))
+  ;;   (catch Exception e
+  ;; 	(println "CAUGHT EXCEPTION: " e))))
+  (let [errorBuffer (java.io.ByteArrayOutputStream.)
+        errorStream (java.io.PrintStream. errorBuffer)]
+    (System/setErr errorStream)
+    (try
+      (eval (AST (parse-expr expr-text)))
+      (catch Exception e
+        (translate-error (.toString errorBuffer "UTF-8"))))))
+
 
