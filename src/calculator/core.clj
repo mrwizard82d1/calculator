@@ -1,3 +1,16 @@
+;; This module implements the calculate function used by the Clojure
+;; Houston Users Group to investigate solving common problems in
+;; Clojure.
+;;
+;; As much as I would like to take credit for this entire
+;; implementation, the vast majority of the credit must go to others:
+;;
+;; * The article "ANTLR 3" by R. Mark Volkmann found at http://jnb.ociweb.com/jnb/jnbJun2008.html.
+;; * The article "ANTLR via Clojure" by Brian Carper found at http://briancarper.net/blog/554/antlr-via-clojure.
+;; * The 'lein antlr' plugin by Alex Hall found at https://github.com/alexhall/lein-antlr.
+;; * And finally, ANTLR itself and "The Definitive ANTLR Reference" by Terrence Parr.
+
+
 (ns calculator.core
   (:import (org.antlr.runtime ANTLRStringStream
 			      CommonTokenStream)
@@ -46,5 +59,8 @@
 
 
 (defn calculate [expr-text]
-  (eval (AST (parse-expr expr-text))))
+  (try
+    (eval (AST (parse-expr expr-text)))
+    (catch Exception e
+	(println "CAUGHT EXCEPTION: " e))))
 
